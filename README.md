@@ -8,6 +8,10 @@
     <img src="https://img.shields.io/badge/License-MIT-brightgreen.svg"
       alt="License: MIT" />
   </a>
+  <a href="https://buymeacoffee.com/lan22h">
+    <img src="https://img.shields.io/static/v1?label=Buy me a coffee&message=%E2%9D%A4&logo=BuyMeACoffee&link=&color=greygreen"
+      alt="Buy me a Coffee" />
+  </a>
 </p>
 
 <!-- <p align="center">
@@ -63,7 +67,7 @@
 
 ## Why checkpipe?
 
-One problem is trying to express python functions in term of dataflows. Think of a function that progresses in stages like the following:
+One problem is trying to express python functions in terms of dataflows. Think of a function that progresses in stages like the following:
 ```
 source_input -> filter -> transform -> filter -> sum
 ```
@@ -75,8 +79,8 @@ we would find ourselves writing
 sum(filter(transform(filter(source_input))))
 ```
 which is not very handy. Another approach would be creating placeholder variables
-to store each stage, but this also introduces unnecessary state which goes against
-the principle of purity in functional programming.
+to store each stage, but this also introduces unnecessary state. If this state is mutable, it goes against the principle of purity in functional programming and the
+function does not clearly denote a mathematical function.
 
 In data analysis and ETL contexts, we may have to build large dataflows so a better approach is necessary.
 
@@ -368,7 +372,7 @@ pip install checkpipe
 
 ## Sponsorship
 
-TODO
+If this project brings value to you, please consider supporting me with a monthly sponsorship or [buying me a coffee](https://buymeacoffee.com/lan22h)
 
 ## 🎉 Credits
 
