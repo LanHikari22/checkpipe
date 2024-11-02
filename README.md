@@ -242,6 +242,10 @@ print(
 [Err('The number 3 is specifically not welcome!'), Err('Evens like 4 are not allowd!'), Ok(50), Err('Evens like 6 are not allowd!')]
 ```
 
+Sometimes the check itself reveals to us a property of the object that we want to error on. Instead of the error function taking the same object as the predicate,
+it gets a transformed object:
+
+
 ### Unpacking tuples
 
 checkpipe comes with support for unpacking tuples of limited size while specifying
