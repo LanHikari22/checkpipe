@@ -242,8 +242,40 @@ print(
 [Err('The number 3 is specifically not welcome!'), Err('Evens like 4 are not allowd!'), Ok(50), Err('Evens like 6 are not allowd!')]
 ```
 
-Sometimes the check itself reveals to us a property of the object that we want to error on. Instead of the error function taking the same object as the predicate,
-it gets a transformed object:
+Sometimes doing a check requires finding a problematic aspect of the source object. For this, we
+use the `check_using` functions, which take a finder callback which returns None if it finds
+nothing problematic, it just tags the source Ok. But if it does find something problematic, it uses
+the problematic object to create an Err object.
+
+```py
+import checkpipe as pipe
+from result import Result
+
+def find_capitalized_word(s: str) -> Optional[str]:
+    words = s.split(' ')
+
+    for word in words:
+        if str.isupper(word):
+            return word
+    
+    return None
+
+print(
+    [ 
+        'this string contains no CAPITALIZED words!',
+        'this one is all good!'
+    ]
+
+    | pipe.OfResultIter[str, str].check_using(
+        find_capitalized_word,
+        lambda cap_word: f'Bad! You used a capitalized word: {cap_word}')
+    | pipe.OfIter[Result[str, str]].to_list()
+)
+```
+```
+[Err('Bad! You used a capitalized word: CAPITALIZED'), Ok('this one is all good!')]
+```
+
 
 
 ### Unpacking tuples

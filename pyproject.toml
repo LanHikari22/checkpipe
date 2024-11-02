@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "checkpipe_lan22h"
-version = "1.0.0"
+name = "checkpipe"
+version = "1.0.1"
 authors = [
   { name = "Mohammed Alzakariya", email = "lanhikarixx@gmail.com" }
 ]
