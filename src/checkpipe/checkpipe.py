@@ -97,12 +97,12 @@ class OfIter(Generic[T]):
         def inner(iter: Iterable[T]) -> Iterable[T]:
             return (
                 iter
-                | PipeUtil.OfIter[T]
-                .map(lambda each: 
+                    | OfIter[T]
+                    .map(lambda each: 
                         each
-                    | PipeUtil.Of[T]
-                    .echo(callback)
-                )
+                            | Of[T]
+                            .echo(callback)
+                    )
             )
         return inner
 
@@ -753,10 +753,10 @@ class OfResultIter(Generic[T, E]):
             return (
                 source
 
-                | PipeUtil.OfIter[Result[T, E]]
+                | OfIter[Result[T, E]]
                 .filter(lambda res: res.is_ok())
 
-                | PipeUtil.OfIter[Result[T, E]]
+                | OfIter[Result[T, E]]
                 .map(lambda res: res.unwrap())
             )
 
@@ -774,10 +774,10 @@ class OfResultIter(Generic[T, E]):
             return (
                 source
 
-                | PipeUtil.OfIter[Result[T, E]]
+                | OfIter[Result[T, E]]
                 .filter(lambda res: res.is_err())
 
-                | PipeUtil.OfIter[Result[T, E]]
+                | OfIter[Result[T, E]]
                 .map(lambda res: res.unwrap_err())
             )
 
@@ -884,21 +884,21 @@ def to_records() -> Callable[[Dict[str, List[Any]]], Result[List[Dict[str, Any]]
         return (
             dic
 
-            | PipeUtil.OfResult[Dict[str, List[Any]], str]
+            | OfResult[Dict[str, List[Any]], str]
             .check(lambda dic: len(list(dic.keys())) > 0,
                    lambda _: 'Empty dict')
             
-            | PipeUtil.OfResult[Dict[str, List[Any]], str]
+            | OfResult[Dict[str, List[Any]], str]
             .on_ok(lambda dic: (dic, list(dic.keys()), n_elems(dic)))
 
-            | PipeUtil.OfResult[Tuple[Dict[str, List[Any]], List[str], int], str]
+            | OfResult[Tuple[Dict[str, List[Any]], List[str], int], str]
             .then_check(lambda dic_keys_n: all_dic_keys_list_of_same_len(dic_keys_n[0], dic_keys_n[2]),
                         lambda _: 'Lists not of same size')
 
-            | PipeUtil.OfResult[Tuple[Dict[str, List[Any]], List[str], int], str]
+            | OfResult[Tuple[Dict[str, List[Any]], List[str], int], str]
             .on_ok(lambda dic_keys_n:
                 dic_keys_n
-                | PipeUtil.OfUnpack3[Dict[str, List[Any]], List[str], int]
+                |OfUnpack3[Dict[str, List[Any]], List[str], int]
                 .unpack(lambda d, ks, n:
                     [{k: d[k][i] for k in ks} for i in range(n)]
                 )
