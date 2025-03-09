@@ -93,6 +93,12 @@ This project aims to build on Julien Palard's project, but with new design consi
 
 The project aims to make it easier to write pure python functions with robust error-checking and all the benefits of static analysis tools like mypy.
 
+## Install
+
+```
+pip install checkpipe
+```
+
 ## Use Cases
 
 * <a href="#-basicfilteringandmapping">Basic filtering and mapping</a>
@@ -106,10 +112,13 @@ import checkpipe as pipe
 
 print(
     [1, 2, 3]
-    
-    | pipe.OfIter[int].map(lambda n: n * 2)
-    | pipe.OfIter[int].filter(lambda n: n != 4)
-    | pipe.OfIter[int].to_list()
+        | pipe.OfIter[int].map(lambda n: 
+            n * 2
+        )
+        | pipe.OfIter[int].filter(lambda n: 
+            n != 4
+        )
+        | pipe.OfIter[int].to_list()
 )
 ```
 ```
@@ -129,7 +138,9 @@ import checkpipe as pipe
 
 print(
     3
-    | pipe.Of[int].to(lambda n: n+1)
+        | pipe.Of[int].to(lambda n: 
+            n+1
+        )
 )
 ```
 ```
@@ -148,10 +159,13 @@ from result import Result
 
 print(
     [1, 2, 3]
-    
-    | pipe.OfIter[int].map(lambda n: n * 2)
-    | pipe.OfIter[int].check(lambda n: n != 4)
-    | pipe.OfIter[Result[int, int]].to_list()
+        | pipe.OfIter[int].map(lambda n: 
+            n * 2
+        )
+        | pipe.OfIter[int].check(lambda n: 
+            n != 4
+        )
+        | pipe.OfIter[Result[int, int]].to_list()
 )
 ```
 ```
@@ -168,11 +182,16 @@ from result import Result
 
 print(
     [1, 2, 3]
-    
-    | pipe.OfIter[int].map(lambda n: n * 2)
-    | pipe.OfIter[int].check(lambda n: n != 4)
-    | pipe.OfResultIter[int, int].on_ok(lambda n: n + 1)
-    | pipe.OfIter[Result[int, int]].to_list()
+        | pipe.OfIter[int].map(lambda n:
+            n * 2
+        )
+        | pipe.OfIter[int].check(lambda n: 
+            n != 4
+        )
+        | pipe.OfResultIter[int, int].on_ok(lambda n: 
+            n + 1
+        )
+        | pipe.OfIter[Result[int, int]].to_list()
 )
 ```
 ```
@@ -189,12 +208,13 @@ from result import Result
 
 print(
     [1, 2, 3, 4]
-    
-    | pipe.OfIter[int].map(lambda n: n + 2)
-    | pipe.OfResultIter[int, str].check(
-        lambda n: n % 2 != 0,
-        lambda n: f'Evens like {n} are not allowd!')
-    | pipe.OfIter[Result[int, str]].to_list()
+        | pipe.OfIter[int].map(lambda n: 
+            n + 2
+        )
+        | pipe.OfResultIter[int, str].check(
+            lambda n: n % 2 != 0,
+            lambda n: f'Evens like {n} are not allowd!')
+        | pipe.OfIter[Result[int, str]].to_list()
 )
 ```
 ```
@@ -209,13 +229,16 @@ from result import Result
 
 print(
     [1, 2, 3, 4]
-    
-    | pipe.OfIter[int].map(lambda n: n + 2)
-    | pipe.OfResultIter[int, str].check(
-        lambda n: n % 2 != 0,
-        lambda n: f'Evens like {n} are not allowd!')
-    | pipe.OfResultIter[int, str].on_ok(lambda n: n * 10)
-    | pipe.OfIter[Result[int, str]].to_list()
+        | pipe.OfIter[int].map(lambda n: 
+            n + 2
+        )
+        | pipe.OfResultIter[int, str].check(
+            lambda n: n % 2 != 0,
+            lambda n: f'Evens like {n} are not allowd!')
+        | pipe.OfResultIter[int, str].on_ok(lambda n: 
+            n * 10
+        )
+        | pipe.OfIter[Result[int, str]].to_list()
 )
 ```
 ```
@@ -230,16 +253,19 @@ from result import Result
 
 print(
     [1, 2, 3, 4]
-    
-    | pipe.OfIter[int].map(lambda n: n + 2)
-    | pipe.OfResultIter[int, str].check(
-        lambda n: n % 2 != 0,
-        lambda n: f'Evens like {n} are not allowd!')
-    | pipe.OfResultIter[int, str].then_check(
-        lambda n: n != 3,
-        lambda _: 'The number 3 is specifically not welcome!')
-    | pipe.OfResultIter[int, str].on_ok(lambda n: n * 10)
-    | pipe.OfIter[Result[int, str]].to_list()
+        | pipe.OfIter[int].map(lambda n: 
+            n + 2
+        )
+        | pipe.OfResultIter[int, str].check(
+            lambda n: n % 2 != 0,
+            lambda n: f'Evens like {n} are not allowd!')
+        | pipe.OfResultIter[int, str].then_check(
+            lambda n: n != 3,
+            lambda _: 'The number 3 is specifically not welcome!')
+        | pipe.OfResultIter[int, str].on_ok(lambda n: 
+            n * 10
+        )
+        | pipe.OfIter[Result[int, str]].to_list()
 )
 ```
 ```
@@ -269,7 +295,6 @@ print(
         'this string contains no CAPITALIZED words!',
         'this one is all good!'
     ]
-
     | pipe.OfResultIter[str, str].check_using(
         find_capitalized_word,
         lambda cap_word: f'Bad! You used a capitalized word: {cap_word}')
@@ -292,9 +317,10 @@ import checkpipe as pipe
 
 print(
     (4, 2, 'Hello ')
-    | pipe.OfUnpack3[int, int, str].unpack(
-        lambda num_spaces, repeat, text: '"' + ' ' * num_spaces + repeat * text + '"'
-  )
+        | pipe.OfUnpack3[int, int, str].unpack(
+              lambda num_spaces, repeat, text: 
+                  '"' + ' ' * num_spaces + repeat * text + '"'
+        )
 )
 ```
 ```
@@ -316,8 +342,8 @@ def multiply_by_num(num: int) -> Callable[[Iterable[int]], Iterable[int]]:
 
 print(
     [1, 2, 3]
-    | multiply_by_num(3)
-    | pipe.OfIter[int].to_list()
+        | multiply_by_num(3)
+        | pipe.OfIter[int].to_list()
 )
 ```
 ```
@@ -347,8 +373,8 @@ class Repeat(Generic[T]):
 
 print(
     ['a', 'b', 'c']
-    | Repeat[str].repeat(3)
-    | pipe.OfIter[str].to_list()
+        | Repeat[str].repeat(3)
+        | pipe.OfIter[str].to_list()
 )
 ```
 ```
@@ -358,12 +384,6 @@ print(
 The pipes are type-safe and they can be checked by mypy. checkpipe cannot
 automatically infer the source type from the left of the `|`. By specifiying `Repeat[str]`, mypy knows
 that when the source `['a', 'b', 'c']` is piped to Repeat, that it must comply to being an `Iterable[str]` or mypy will error.
-
-## Install
-
-```
-pip install checkpipe
-```
 
 ## Todo
 - Implement similar default pipes to Julien Palard's project to facilitate
