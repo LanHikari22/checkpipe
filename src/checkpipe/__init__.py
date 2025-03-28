@@ -10,3 +10,6 @@ from .checkpipe import OfUnpack3 as OfUnpack3
 from .checkpipe import OfUnpack4 as OfUnpack4
 from .checkpipe import to_records as to_records
 from .checkpipe import stop_iter as stop_iter
+from .checkpipe import tup2_unpack as tup2_unpack
+from .checkpipe import tup3_unpack as tup3_unpack
+from .checkpipe import tup4_unpack as tup4_unpack

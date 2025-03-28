@@ -909,3 +909,15 @@ def to_records() -> Callable[[Dict[str, List[Any]]], Result[List[Dict[str, Any]]
 
 def stop_iter(val: T) -> NoReturn:
     raise StopIteration(val)
+
+def tup2_unpack(fn: Callable[[T1, T2], Y]) -> Callable[[Tuple[T1, T2]], Y]:
+    """
+    Use this for example with enumerate tuple unpacking
+    """
+    return lambda tup: fn(tup[0], tup[1])
+
+def tup3_unpack(fn: Callable[[T1, T2, T3], Y]) -> Callable[[Tuple[T1, T2, T3]], Y]:
+    return lambda tup: fn(tup[0], tup[1], tup[2])
+
+def tup4_unpack(fn: Callable[[T1, T2, T3, T4], Y]) -> Callable[[Tuple[T1, T2, T3, T4]], Y]:
+    return lambda tup: fn(tup[0], tup[1], tup[2], tup[3])
