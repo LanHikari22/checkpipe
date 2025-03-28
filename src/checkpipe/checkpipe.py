@@ -938,3 +938,45 @@ class Enumerate(Generic[T]):
         def inner(source: Iterable[T]) -> Iterable[Tuple[int, T]]:
             return enumerate(source)
         return inner
+
+
+class FlattenResults(Generic[T, E]):
+    """
+        Given an iterable of results, this shortcircuits on first failure or collects a list of all
+        inner OK values
+    """
+    @Pipe
+    @staticmethod
+    def flatten() -> Callable[[Iterable[Result[T, E]]], Result[List[T], E]]:
+        def inner(source: Iterable[Result[T, E]]) -> Result[List[T], E]:
+            results: List[T] = []
+
+            for res in source:
+                if res.is_err():
+                    return Err(res.unwrap_err())
+                else:
+                    results.append(res.unwrap())
+            
+            return Ok(results)
+        return inner
+
+
+class FlattenOptionals(Generic[T]):
+    """
+        Given an iterable of optionals, this shortcircuits on first none or collects a list of all
+        available values
+    """
+    @Pipe
+    @staticmethod
+    def flatten() -> Callable[[Iterable[Optional[T]]], Optional[List[T]]]:
+        def inner(source: Iterable[Optional[T]]) -> Optional[List[T]]:
+            results: List[T] = []
+
+            for res in source:
+                if res is None:
+                    return None
+                else:
+                    results.append(res)
+            
+            return results
+        return inner
