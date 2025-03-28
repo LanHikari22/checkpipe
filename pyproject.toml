@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "checkpipe"
-version = "1.0.7"
+version = "1.0.8"
 authors = [
   { name = "Mohammed Alzakariya", email = "lanhikarixx@gmail.com" }
 ]

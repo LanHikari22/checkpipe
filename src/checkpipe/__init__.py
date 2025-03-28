@@ -14,3 +14,5 @@ from .checkpipe import tup2_unpack as tup2_unpack
 from .checkpipe import tup3_unpack as tup3_unpack
 from .checkpipe import tup4_unpack as tup4_unpack
 from .checkpipe import Enumerate as Enumerate
+from .checkpipe import FlattenResults as FlattenResults
+from .checkpipe import FlattenOptionals as FlattenOptionals
