@@ -13,6 +13,10 @@ from .checkpipe import stop_iter as stop_iter
 from .checkpipe import tup2_unpack as tup2_unpack
 from .checkpipe import tup3_unpack as tup3_unpack
 from .checkpipe import tup4_unpack as tup4_unpack
+from .checkpipe import tup5_unpack as tup5_unpack
+from .checkpipe import tup6_unpack as tup6_unpack
+from .checkpipe import tup7_unpack as tup7_unpack
+from .checkpipe import tup8_unpack as tup8_unpack
 from .checkpipe import Enumerate as Enumerate
 from .checkpipe import FlattenResults as FlattenResults
 from .checkpipe import FlattenOptionals as FlattenOptionals

@@ -16,6 +16,10 @@ T1 = TypeVar('T1')
 T2 = TypeVar('T2')
 T3 = TypeVar('T3')
 T4 = TypeVar('T4')
+T5 = TypeVar('T5')
+T6 = TypeVar('T6')
+T7 = TypeVar('T7')
+T8 = TypeVar('T8')
 
 P = ParamSpec('P')
 
@@ -925,6 +929,17 @@ def tup3_unpack(fn: Callable[[T1, T2, T3], Y]) -> Callable[[Tuple[T1, T2, T3]], 
 def tup4_unpack(fn: Callable[[T1, T2, T3, T4], Y]) -> Callable[[Tuple[T1, T2, T3, T4]], Y]:
     return lambda tup: fn(tup[0], tup[1], tup[2], tup[3])
 
+def tup5_unpack(fn: Callable[[T1, T2, T3, T4, T5], Y]) -> Callable[[Tuple[T1, T2, T3, T4, T5]], Y]:
+    return lambda tup: fn(tup[0], tup[1], tup[2], tup[3], tup[4])
+
+def tup6_unpack(fn: Callable[[T1, T2, T3, T4, T5, T6], Y]) -> Callable[[Tuple[T1, T2, T3, T4, T5, T6]], Y]:
+    return lambda tup: fn(tup[0], tup[1], tup[2], tup[3], tup[4], tup[5])
+
+def tup7_unpack(fn: Callable[[T1, T2, T3, T4, T5, T6, T7], Y]) -> Callable[[Tuple[T1, T2, T3, T4, T5, T6, T7]], Y]:
+    return lambda tup: fn(tup[0], tup[1], tup[2], tup[3], tup[4], tup[5], tup[6])
+
+def tup8_unpack(fn: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Y]) -> Callable[[Tuple[T1, T2, T3, T4, T5, T6, T7, T8]], Y]:
+    return lambda tup: fn(tup[0], tup[1], tup[2], tup[3], tup[4], tup[5], tup[6], tup[7])
 
 class Enumerate(Generic[T]):
     """
