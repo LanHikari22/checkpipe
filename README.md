@@ -68,14 +68,15 @@
 - [Why checkpipe?](#why-checkpipe)
 - [Install](#install)
 - [Use Cases](#use-cases)
-  - [Case 1: Basic filtering and mapping](#case-1-basic-filtering-and-mapping)
-  - [Case 2: Direct transformations outside iterators](#case-2-direct-transformations-outside-iterators)
-  - [Case 3: Basic validation in dataflows](#case-3-basic-validation-in-dataflows)
-  - [Case 4: Flattening of Errors](#case-4-flattening-of-errors)
-  - [Case 5: Flattening of Options](#case-5-flattening-of-options)
-  - [Case 6: Unpacking tuples](#case-6-unpacking-tuples)
-  - [Case 7: Enumeration](#case-7-enumeration)
-  - [Case 8: Creating a new Pipe function](#case-8-creating-a-new-pipe-function)
+  - [Case 1: Basic mapping and filtering](#case-1-basic-mapping-and-filtering)
+  - [Case 2: Basic folding](#case-2-basic-folding)
+  - [Case 3: Direct transformations outside iterators](#case-3-direct-transformations-outside-iterators)
+  - [Case 4: Basic validation in dataflows](#case-4-basic-validation-in-dataflows)
+  - [Case 5: Flattening of Errors](#case-5-flattening-of-errors)
+  - [Case 6: Flattening of Optionals](#case-6-flattening-of-optionals)
+  - [Case 7: Unpacking tuples](#case-7-unpacking-tuples)
+  - [Case 8: Enumeration](#case-8-enumeration)
+  - [Case 9: Creating a new Pipe function](#case-9-creating-a-new-pipe-function)
 - [Todo](#todo)
 - [Sponsorship](#sponsorship)
 - [🎉 Credits](#-credits)
@@ -119,7 +120,7 @@ pip install checkpipe
 
 ## Use Cases
 
-### Case 1: Basic filtering and mapping
+### Case 1: Basic mapping and filtering
 ```py
 import checkpipe as pipe
 
@@ -144,7 +145,43 @@ in order for our lambdas to be typed. `[1, 2, 3]` is a List[int] and also can be
 use `pipe.OfIter[int]`. This makes use of generics to give us expectations on
 the signature of the higher order functions passed to functions like `.map` and `.filter`. These expectations can be automatically checked by mypy. And vscode is able to know that `n` is an integer in the lambdas.
 
-### Case 2: Direct transformations outside iterators
+### Case 2: Basic folding
+
+Let's say we want to sum over our source input `[1, 2, 3]` and fold it into a single int.
+
+Here's an example to implement that:
+
+```py
+import checkpipe as pipe
+
+print(
+    [1, 2, 3]
+        | pipe.OfIter[int]
+        .fold(0, lambda acc, n: acc + n)
+)
+```
+```
+6
+```
+
+Maybe we want to stop iterating before we finish consuming the list. We can use `pipe.stop_iter` as in the following:
+
+```py
+import checkpipe as pipe
+
+print(
+    [1, 2, 3, 4, 5]
+        | pipe.OfIter[int]
+        .fold(0, lambda acc, n: 
+                acc + n if n <= 3 else pipe.stop_iter(acc)
+        )
+)
+```
+```
+6
+```
+
+### Case 3: Direct transformations outside iterators
 ```py
 import checkpipe as pipe
 
@@ -160,10 +197,10 @@ print(
 
 checkpipe does not only work with iterators. It works directly with types and
 allows transformations to the source object as well. In this case, no consumption
-of an iterator is jnecessary. `.to(...)` will return the transformed source
+of an iterator is necessary. `.to(...)` will return the transformed source
 directly.
 
-### Case 3: Basic validation in dataflows
+### Case 4: Basic validation in dataflows
 ```py
 import checkpipe as pipe
 from result import Result
@@ -317,7 +354,7 @@ print(
 [Err('Bad! You used a capitalized word: CAPITALIZED'), Ok('this one is all good!')]
 ```
 
-### Case 4: Flattening of Errors
+### Case 5: Flattening of Errors
 
 Often we might have an error occur during mapping so when we consume we end up with a type like `List[Result[T, E]]`. We can flatten the results by shortcircuiting on the first error, turning it into a `Result[List[T], E]`. Let's say we're interested in checking that a tuple of `(n, m, sub_eq)` satisfy the property that `n - m = sub_eq`:
 
@@ -380,7 +417,7 @@ print(
 Ok([(4, 1, 3), (3, 2, 1), (10, 5, 5), (3, 1, 2)])
 ```
 
-### Case 5: Flattening of Options
+### Case 6: Flattening of Optionals
 
 Similarly to flattening of Results, sometimes we may map an element in an iterator to 
 None, and we want to guarantee our final list consumed has no Nones in it or it is 
@@ -391,13 +428,13 @@ import checkpipe as pipe
 from typing import Tuple
 
 print(
-        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 2)]
-            | pipe.OfIter[Tuple[int, int, int]]
-            .map(pipe.tup3_unpack(lambda n, m, sub_eq:
-                (n, m, sub_eq) if n - m == sub_eq else None
-            ))
-            | pipe.FlattenOptionals[Tuple[int, int, int]]
-            .flatten()
+    [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 2)]
+        | pipe.OfIter[Tuple[int, int, int]]
+        .map(pipe.tup3_unpack(lambda n, m, sub_eq:
+            (n, m, sub_eq) if n - m == sub_eq else None
+        ))
+        | pipe.OfOptionalIter[Tuple[int, int, int]]
+        .flatten()
 )
 ```
 ```
@@ -410,13 +447,13 @@ import checkpipe as pipe
 from typing import Tuple
 
 print(
-        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (3, 1, 2)]
-            | pipe.OfIter[Tuple[int, int, int]]
-            .map(pipe.tup3_unpack(lambda n, m, sub_eq:
-                (n, m, sub_eq) if n - m == sub_eq else None
-            ))
-            | pipe.FlattenOptionals[Tuple[int, int, int]]
-            .flatten()
+    [(4, 1, 3), (3, 2, 1), (10, 5, 5), (3, 1, 2)]
+        | pipe.OfIter[Tuple[int, int, int]]
+        .map(pipe.tup3_unpack(lambda n, m, sub_eq:
+            (n, m, sub_eq) if n - m == sub_eq else None
+        ))
+        | pipe.OfOptionalIter[Tuple[int, int, int]]
+        .flatten()
 )
 ```
 ```
@@ -424,7 +461,7 @@ print(
 ```
 
 
-### Case 6: Unpacking tuples
+### Case 7: Unpacking tuples
 
 checkpipe comes with support for unpacking tuples of limited size while specifying
 the types of each element:
@@ -466,7 +503,7 @@ print(
 [True, True, True, False]
 ```
 
-### Case 7: Enumeration
+### Case 8: Enumeration
 
 We often want to tag an index alongside our data as we iterate. Here is an example:
 
@@ -491,7 +528,7 @@ print(
 ```
 
 
-### Case 8: Creating a new Pipe function
+### Case 9: Creating a new Pipe function
 
 ```py
 import checkpipe as pipe
