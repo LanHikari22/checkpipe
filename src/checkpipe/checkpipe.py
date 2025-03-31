@@ -193,7 +193,20 @@ class OfIter(Generic[T]):
     @staticmethod
     def reduce(initial: Y, function: Callable[[Y, T], Y]) -> Callable[[Iterable[T]], Y]:
         """
-        For early termination: use stop_iter with the accumulator value.
+        Same as fold. For early termination: use stop_iter with the accumulator value.
+        """
+        def inner(iter: Iterable[T]) -> Y:
+            try:
+                return functools.reduce(function, iter, initial)
+            except StopIteration as e:
+                return cast(Y, e.args[0])
+        return inner
+
+    @Pipe
+    @staticmethod
+    def fold(initial: Y, function: Callable[[Y, T], Y]) -> Callable[[Iterable[T]], Y]:
+        """
+        Same as reduce. For early termination: use stop_iter with the accumulator value.
         """
         def inner(iter: Iterable[T]) -> Y:
             try:
@@ -908,26 +921,25 @@ def to_records() -> Callable[[Dict[str, List[Any]]], Result[List[Dict[str, Any]]
 
         return (
             dic
+                | OfResult[Dict[str, List[Any]], str]
+                .check(lambda dic: len(list(dic.keys())) > 0,
+                    lambda _: 'Empty dict')
+                
+                | OfResult[Dict[str, List[Any]], str]
+                .on_ok(lambda dic: (dic, list(dic.keys()), n_elems(dic)))
 
-            | OfResult[Dict[str, List[Any]], str]
-            .check(lambda dic: len(list(dic.keys())) > 0,
-                   lambda _: 'Empty dict')
-            
-            | OfResult[Dict[str, List[Any]], str]
-            .on_ok(lambda dic: (dic, list(dic.keys()), n_elems(dic)))
+                | OfResult[Tuple[Dict[str, List[Any]], List[str], int], str]
+                .then_check(lambda dic_keys_n: all_dic_keys_list_of_same_len(dic_keys_n[0], dic_keys_n[2]),
+                            lambda _: 'Lists not of same size')
 
-            | OfResult[Tuple[Dict[str, List[Any]], List[str], int], str]
-            .then_check(lambda dic_keys_n: all_dic_keys_list_of_same_len(dic_keys_n[0], dic_keys_n[2]),
-                        lambda _: 'Lists not of same size')
-
-            | OfResult[Tuple[Dict[str, List[Any]], List[str], int], str]
-            .on_ok(lambda dic_keys_n:
-                dic_keys_n
-                |OfUnpack3[Dict[str, List[Any]], List[str], int]
-                .unpack(lambda d, ks, n:
-                    [{k: d[k][i] for k in ks} for i in range(n)]
+                | OfResult[Tuple[Dict[str, List[Any]], List[str], int], str]
+                .on_ok(lambda dic_keys_n:
+                    dic_keys_n
+                        | Of[Tuple[Dict[str, List[Any]], List[str], int]]
+                        .to(tup3_unpack(lambda d, ks, n:
+                            [{k: d[k][i] for k in ks} for i in range(n)]
+                        ))
                 )
-            )
         )
     return inner
 
@@ -961,38 +973,3 @@ def tup7_unpack(fn: Callable[[T1, T2, T3, T4, T5, T6, T7], Y]) -> Callable[[Tupl
 
 def tup8_unpack(fn: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Y]) -> Callable[[Tuple[T1, T2, T3, T4, T5, T6, T7, T8]], Y]:
     return lambda tup: fn(tup[0], tup[1], tup[2], tup[3], tup[4], tup[5], tup[6], tup[7])
-
-class Enumerate(Generic[T]):
-    """
-    Given an iterable of T, gives an iterable of (int, T). A list of strings
-    for example can be enumerated with `['a', 'b', 'c'] | Enumerate[str].enumerate()`
-    which when consumed yields `[(0, 'a'), (1, 'b'), (2, 'c')]`
-    """
-    @Pipe
-    @staticmethod
-    def enumerate() -> Callable[[Iterable[T]], Iterable[Tuple[int, T]]]:
-        def inner(source: Iterable[T]) -> Iterable[Tuple[int, T]]:
-            return enumerate(source)
-        return inner
-
-
-class FlattenResults(Generic[T, E]):
-    """
-        Given an iterable of results, this shortcircuits on first failure or collects a list of all
-        inner OK values
-    """
-    @Pipe
-    @staticmethod
-    def flatten() -> Callable[[Iterable[Result[T, E]]], Result[List[T], E]]:
-        def inner(source: Iterable[Result[T, E]]) -> Result[List[T], E]:
-            results: List[T] = []
-
-            for res in source:
-                if res.is_err():
-                    return Err(res.unwrap_err())
-                else:
-                    results.append(res.unwrap())
-            
-            return Ok(results)
-        return inner
-
