@@ -260,6 +260,18 @@ class OfIter(Generic[T]):
 
         return inner
 
+    @Pipe
+    @staticmethod
+    def enumerate() -> Callable[[Iterable[T]], Iterable[Tuple[int, T]]]:
+        """
+        Given an iterable of T, gives an iterable of (int, T). A list of strings
+        for example can be enumerated with `['a', 'b', 'c'] | Enumerate[str].enumerate()`
+        which when consumed yields `[(0, 'a'), (1, 'b'), (2, 'c')]`
+        """
+        def inner(source: Iterable[T]) -> Iterable[Tuple[int, T]]:
+            return enumerate(source)
+        return inner
+
 
 class OfStr:
     @Pipe
@@ -839,33 +851,45 @@ class OfResultIter(Generic[T, E]):
 
         return inner
 
-
-class OfUnpack2(Generic[T1, T2]):
     @Pipe
     @staticmethod
-    def unpack(callback: Callable[[T1, T2], Y]) -> Callable[[Tuple[T1, T2]], Y]:
-        def inner(tup: Tuple[T1, T2]) -> Y:
-            return callback(tup[0], tup[1])
+    def flatten() -> Callable[[Iterable[Result[T, E]]], Result[List[T], E]]:
+        """
+            Given an iterable of results, this shortcircuits on first failure or collects a list of all
+            inner OK values
+        """
+        def inner(source: Iterable[Result[T, E]]) -> Result[List[T], E]:
+            results: List[T] = []
+
+            for res in source:
+                if res.is_err():
+                    return Err(res.unwrap_err())
+                else:
+                    results.append(res.unwrap())
+            
+            return Ok(results)
         return inner
 
 
-class OfUnpack3(Generic[T1, T2, T3]):
+class OfOptionalIter(Generic[T]):
     @Pipe
     @staticmethod
-    def unpack(callback: Callable[[T1, T2, T3], Y]) -> Callable[[Tuple[T1, T2, T3]], Y]:
-        def inner(tup: Tuple[T1, T2, T3]) -> Y:
-            return callback(tup[0], tup[1], tup[2])
+    def flatten() -> Callable[[Iterable[Optional[T]]], Optional[List[T]]]:
+        """
+            Given an iterable of optionals, this shortcircuits on first none or collects a list of all
+            available values
+        """
+        def inner(source: Iterable[Optional[T]]) -> Optional[List[T]]:
+            results: List[T] = []
+
+            for res in source:
+                if res is None:
+                    return None
+                else:
+                    results.append(res)
+            
+            return results
         return inner
-
-
-class OfUnpack4(Generic[T1, T2, T3, T4]):
-    @Pipe
-    @staticmethod
-    def unpack(callback: Callable[[T1, T2, T3, T4], Y]) -> Callable[[Tuple[T1, T2, T3, T4]], Y]:
-        def inner(tup: Tuple[T1, T2, T3, T4]) -> Y:
-            return callback(tup[0], tup[1], tup[2], tup[3])
-        return inner
-
 
 @Pipe
 def to_records() -> Callable[[Dict[str, List[Any]]], Result[List[Dict[str, Any]], str]]:
@@ -972,23 +996,3 @@ class FlattenResults(Generic[T, E]):
             return Ok(results)
         return inner
 
-
-class FlattenOptionals(Generic[T]):
-    """
-        Given an iterable of optionals, this shortcircuits on first none or collects a list of all
-        available values
-    """
-    @Pipe
-    @staticmethod
-    def flatten() -> Callable[[Iterable[Optional[T]]], Optional[List[T]]]:
-        def inner(source: Iterable[Optional[T]]) -> Optional[List[T]]:
-            results: List[T] = []
-
-            for res in source:
-                if res is None:
-                    return None
-                else:
-                    results.append(res)
-            
-            return results
-        return inner

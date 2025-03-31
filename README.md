@@ -71,10 +71,11 @@
   - [Case 1: Basic filtering and mapping](#case-1-basic-filtering-and-mapping)
   - [Case 2: Direct transformations outside iterators](#case-2-direct-transformations-outside-iterators)
   - [Case 3: Basic validation in dataflows](#case-3-basic-validation-in-dataflows)
-  - [Case 4: Flattening of Errors (TODO)](#case-4-flattening-of-errors-todo)
-  - [Case 5: Unpacking tuples](#case-5-unpacking-tuples)
-  - [Case 6: Enumeration](#case-6-enumeration)
-  - [Case 7: Creating a new Pipe function](#case-7-creating-a-new-pipe-function)
+  - [Case 4: Flattening of Errors](#case-4-flattening-of-errors)
+  - [Case 5: Flattening of Options](#case-5-flattening-of-options)
+  - [Case 6: Unpacking tuples](#case-6-unpacking-tuples)
+  - [Case 7: Enumeration](#case-7-enumeration)
+  - [Case 8: Creating a new Pipe function](#case-8-creating-a-new-pipe-function)
 - [Todo](#todo)
 - [Sponsorship](#sponsorship)
 - [🎉 Credits](#-credits)
@@ -316,9 +317,9 @@ print(
 [Err('Bad! You used a capitalized word: CAPITALIZED'), Ok('this one is all good!')]
 ```
 
-### Case 4: Flattening of Errors (TODO)
+### Case 4: Flattening of Errors
 
-Often we might have an error occur during mapping so when we consume we end up with a type like `List[Result[T, E]]`. We can flatten the results by shortcircuiting on the first error, turning it into a `Result[List[T], E]` like in the following:
+Often we might have an error occur during mapping so when we consume we end up with a type like `List[Result[T, E]]`. We can flatten the results by shortcircuiting on the first error, turning it into a `Result[List[T], E]`. Let's say we're interested in checking that a tuple of `(n, m, sub_eq)` satisfy the property that `n - m = sub_eq`:
 
 ```py
 from result import Result
@@ -329,38 +330,119 @@ print(
         [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 0)]
             | pipe.OfIter[Tuple[int, int, int]]
             .check(pipe.tup3_unpack(lambda n, m, sub_eq:
-                [print(f'Hello {n} {m} {sub_eq}'),
-                n - m == sub_eq][-1]
+                n - m == sub_eq
             ))
             | pipe.OfIter[Result[Tuple[int, int, int], Tuple[int, int, int]]]
             .to_list()
 )
-
 ```
 ```
-TODO BUG Infinite loop
+[Ok((4, 1, 3)), Ok((3, 2, 1)), Ok((10, 5, 5)), Err((1, 3, 0))]
+```
+
+We are able to compute what elements of our iterable satisfy the property, but what if we expect that they all must satisfy it? Then we can flatten the error:
+
+```py
+import checkpipe as pipe
+from typing import Tuple
+
+print(
+        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 0)]
+            | pipe.OfIter[Tuple[int, int, int]]
+            .check(pipe.tup3_unpack(lambda n, m, sub_eq:
+                n - m == sub_eq
+            ))
+            | pipe.FlattenResults[Tuple[int, int, int], Tuple[int, int, int]]
+            .flatten()
+)
+```
+```
+Err((1, 3, 0))
+```
+
+As expected, we get the error variant, communicating that the entire list did not satisfy the property for all of its elements. Here's what we get if they do satisfy:
+
+```py
+import checkpipe as pipe
+from typing import Tuple
+
+print(
+        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (3, 1, 2)]
+            | pipe.OfIter[Tuple[int, int, int]]
+            .check(pipe.tup3_unpack(lambda n, m, sub_eq:
+                n - m == sub_eq
+            ))
+            | pipe.FlattenResults[Tuple[int, int, int], Tuple[int, int, int]]
+            .flatten()
+)
+```
+```
+Ok([(4, 1, 3), (3, 2, 1), (10, 5, 5), (3, 1, 2)])
+```
+
+### Case 5: Flattening of Options
+
+Similarly to flattening of Results, sometimes we may map an element in an iterator to 
+None, and we want to guarantee our final list consumed has no Nones in it or it is 
+entirely None. Here is the example:
+
+```py
+import checkpipe as pipe
+from typing import Tuple
+
+print(
+        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 2)]
+            | pipe.OfIter[Tuple[int, int, int]]
+            .map(pipe.tup3_unpack(lambda n, m, sub_eq:
+                (n, m, sub_eq) if n - m == sub_eq else None
+            ))
+            | pipe.FlattenOptionals[Tuple[int, int, int]]
+            .flatten()
+)
+```
+```
+None
+```
+
+And the valid example:
+```py
+import checkpipe as pipe
+from typing import Tuple
+
+print(
+        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (3, 1, 2)]
+            | pipe.OfIter[Tuple[int, int, int]]
+            .map(pipe.tup3_unpack(lambda n, m, sub_eq:
+                (n, m, sub_eq) if n - m == sub_eq else None
+            ))
+            | pipe.FlattenOptionals[Tuple[int, int, int]]
+            .flatten()
+)
+```
+```
+[(4, 1, 3), (3, 2, 1), (10, 5, 5), (3, 1, 2)]
 ```
 
 
-### Case 5: Unpacking tuples
+### Case 6: Unpacking tuples
 
 checkpipe comes with support for unpacking tuples of limited size while specifying
 the types of each element:
 
 ```py
 import checkpipe as pipe
+from typing import Tuple
 
 print(
     (4, 2, 'Hello ')
-        | pipe.OfUnpack3[int, int, str]
-        .unpack(
-              lambda num_spaces, repeat, text: 
-                  '"' + ' ' * num_spaces + repeat * text + '"'
-        )
+        | pipe.Of[Tuple[int, int, str]]
+        .to(pipe.tup3_unpack(lambda num_underscores, repeat, text: 
+            '"' + ('_' * num_underscores) + (repeat * text) + '"'
+        ))
 )
 ```
 ```
-"    Hello Hello "
+"____Hello Hello "
 ```
 
 You can also use the pipe.tupN_unpack functions within a `pipe.OfIter[T].map` for instance:
@@ -384,9 +466,9 @@ print(
 [True, True, True, False]
 ```
 
-### Case 6: Enumeration
+### Case 7: Enumeration
 
-We often want to tag a counter alongside our data as we iterate. Here is an example:
+We often want to tag an index alongside our data as we iterate. Here is an example:
 
 ```py
 import checkpipe as pipe
@@ -410,7 +492,7 @@ print(
 ```
 
 
-### Case 7: Creating a new Pipe function
+### Case 8: Creating a new Pipe function
 
 ```py
 import checkpipe as pipe
