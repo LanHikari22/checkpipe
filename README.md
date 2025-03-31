@@ -327,13 +327,13 @@ import checkpipe as pipe
 from typing import Tuple
 
 print(
-        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 0)]
-            | pipe.OfIter[Tuple[int, int, int]]
-            .check(pipe.tup3_unpack(lambda n, m, sub_eq:
-                n - m == sub_eq
-            ))
-            | pipe.OfIter[Result[Tuple[int, int, int], Tuple[int, int, int]]]
-            .to_list()
+    [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 0)]
+        | pipe.OfIter[Tuple[int, int, int]]
+        .check(pipe.tup3_unpack(lambda n, m, sub_eq:
+            n - m == sub_eq
+        ))
+        | pipe.OfIter[Result[Tuple[int, int, int], Tuple[int, int, int]]]
+        .to_list()
 )
 ```
 ```
@@ -347,13 +347,13 @@ import checkpipe as pipe
 from typing import Tuple
 
 print(
-        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 0)]
-            | pipe.OfIter[Tuple[int, int, int]]
-            .check(pipe.tup3_unpack(lambda n, m, sub_eq:
-                n - m == sub_eq
-            ))
-            | pipe.FlattenResults[Tuple[int, int, int], Tuple[int, int, int]]
-            .flatten()
+    [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 0)]
+        | pipe.OfIter[Tuple[int, int, int]]
+        .check(pipe.tup3_unpack(lambda n, m, sub_eq:
+            n - m == sub_eq
+        ))
+        | pipe.OfResultIter[Tuple[int, int, int], Tuple[int, int, int]]
+        .flatten()
 )
 ```
 ```
@@ -367,13 +367,13 @@ import checkpipe as pipe
 from typing import Tuple
 
 print(
-        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (3, 1, 2)]
-            | pipe.OfIter[Tuple[int, int, int]]
-            .check(pipe.tup3_unpack(lambda n, m, sub_eq:
-                n - m == sub_eq
-            ))
-            | pipe.FlattenResults[Tuple[int, int, int], Tuple[int, int, int]]
-            .flatten()
+    [(4, 1, 3), (3, 2, 1), (10, 5, 5), (3, 1, 2)]
+        | pipe.OfIter[Tuple[int, int, int]]
+        .check(pipe.tup3_unpack(lambda n, m, sub_eq:
+            n - m == sub_eq
+        ))
+        | pipe.OfResultIter[Tuple[int, int, int], Tuple[int, int, int]]
+        .flatten()
 )
 ```
 ```
@@ -476,7 +476,7 @@ from typing import Tuple
 
 print(
     ['a', 'b', 'c']
-    | pipe.Enumerate[str]
+    | pipe.OfIter[str]
     .enumerate()
     | pipe.OfIter[Tuple[int, str]]
     .map(pipe.tup2_unpack(lambda i, c: 
@@ -485,7 +485,6 @@ print(
     | pipe.OfIter[str]
     .to_list()
 )
-
 ```
 ```
 ['a', 'X', 'c']

@@ -5,6 +5,7 @@ from .checkpipe import OfList as OfList
 from .checkpipe import Of as Of
 from .checkpipe import OfResult as OfResult
 from .checkpipe import OfResultIter as OfResultIter
+from .checkpipe import OfOptionalIter as OfOptionalIter
 from .checkpipe import to_records as to_records
 from .checkpipe import stop_iter as stop_iter
 from .checkpipe import tup2_unpack as tup2_unpack
