@@ -210,8 +210,7 @@ class OfIter(Generic[T]):
         """
         def inner(source: Iterable[T]) -> Iterable[Result[T, T]]:
             try:
-                while True:
-                    item = next(iter(source))
+                for item in source:
                     yield (
                         Ok(item) if cond_callback(item) else
                         Err(item)
@@ -230,9 +229,7 @@ class OfIter(Generic[T]):
         """
         def inner(source: Iterable[T]) -> Iterable[Result[T, T]]:
             try:
-                while True:
-                    item = next(iter(source))
-
+                for item in source:
                     if cond_callback(item):
                         yield Ok(item)
                     else:

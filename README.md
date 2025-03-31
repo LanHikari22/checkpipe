@@ -65,6 +65,23 @@
 
 <!-- <img alt="TTM Demo" src="https://user-images.githubusercontent.com/9413602/105746868-f3734a00-5f7a-11eb-8db5-22fcf50a171b.gif" /> TODO -->
 
+- [Why checkpipe?](#why-checkpipe)
+- [Install](#install)
+- [Use Cases](#use-cases)
+  - [Case 1: Basic filtering and mapping](#case-1-basic-filtering-and-mapping)
+  - [Case 2: Direct transformations outside iterators](#case-2-direct-transformations-outside-iterators)
+  - [Case 3: Basic validation in dataflows](#case-3-basic-validation-in-dataflows)
+  - [Case 4: Flattening of Errors (TODO)](#case-4-flattening-of-errors-todo)
+  - [Case 5: Unpacking tuples](#case-5-unpacking-tuples)
+  - [Case 6: Enumeration](#case-6-enumeration)
+  - [Case 7: Creating a new Pipe function](#case-7-creating-a-new-pipe-function)
+- [Todo](#todo)
+- [Sponsorship](#sponsorship)
+- [🎉 Credits](#-credits)
+- [Contributing](#contributing)
+- [License](#license)
+
+
 ## Why checkpipe?
 
 One problem is trying to express python functions in terms of dataflows. Think of a function that progresses in stages like the following:
@@ -101,24 +118,18 @@ pip install checkpipe
 
 ## Use Cases
 
-* <a href="#-basicfilteringandmapping">Basic filtering and mapping</a>
-* <a href="#-directtransformationsoutsideiterators">Direct transformations outside iterators</a>
-* <a href="#-basicvalidationindataflows">Basic validation in dataflows</a>
-* <a href="#-creatinganewpipefunction">Creating a new Pipe function</a>
-
-### Basic filtering and mapping
+### Case 1: Basic filtering and mapping
 ```py
 import checkpipe as pipe
 
 print(
     [1, 2, 3]
-        | pipe.OfIter[int].map(lambda n: 
-            n * 2
-        )
-        | pipe.OfIter[int].filter(lambda n: 
-            n != 4
-        )
-        | pipe.OfIter[int].to_list()
+        | pipe.OfIter[int]
+        .map(lambda n: n * 2)
+        | pipe.OfIter[int]
+        .filter(lambda n: n != 4)
+        | pipe.OfIter[int]
+        .to_list()
 )
 ```
 ```
@@ -132,15 +143,14 @@ in order for our lambdas to be typed. `[1, 2, 3]` is a List[int] and also can be
 use `pipe.OfIter[int]`. This makes use of generics to give us expectations on
 the signature of the higher order functions passed to functions like `.map` and `.filter`. These expectations can be automatically checked by mypy. And vscode is able to know that `n` is an integer in the lambdas.
 
-### Direct transformations outside iterators
+### Case 2: Direct transformations outside iterators
 ```py
 import checkpipe as pipe
 
 print(
     3
-        | pipe.Of[int].to(lambda n: 
-            n+1
-        )
+        | pipe.Of[int]
+        .to(lambda n: n+1)
 )
 ```
 ```
@@ -152,20 +162,19 @@ allows transformations to the source object as well. In this case, no consumptio
 of an iterator is jnecessary. `.to(...)` will return the transformed source
 directly.
 
-### Basic validation in dataflows
+### Case 3: Basic validation in dataflows
 ```py
 import checkpipe as pipe
 from result import Result
 
 print(
     [1, 2, 3]
-        | pipe.OfIter[int].map(lambda n: 
-            n * 2
-        )
-        | pipe.OfIter[int].check(lambda n: 
-            n != 4
-        )
-        | pipe.OfIter[Result[int, int]].to_list()
+        | pipe.OfIter[int]
+        .map(lambda n: n * 2)
+        | pipe.OfIter[int]
+        .check(lambda n: n != 4)
+        | pipe.OfIter[Result[int, int]]
+        .to_list()
 )
 ```
 ```
@@ -182,16 +191,14 @@ from result import Result
 
 print(
     [1, 2, 3]
-        | pipe.OfIter[int].map(lambda n:
-            n * 2
-        )
-        | pipe.OfIter[int].check(lambda n: 
-            n != 4
-        )
-        | pipe.OfResultIter[int, int].on_ok(lambda n: 
-            n + 1
-        )
-        | pipe.OfIter[Result[int, int]].to_list()
+        | pipe.OfIter[int]
+        .map(lambda n: n * 2)
+        | pipe.OfIter[int]
+        .check(lambda n: n != 4)
+        | pipe.OfResultIter[int, int]
+        .on_ok(lambda n: n + 1)
+        | pipe.OfIter[Result[int, int]]
+        .to_list()
 )
 ```
 ```
@@ -208,13 +215,14 @@ from result import Result
 
 print(
     [1, 2, 3, 4]
-        | pipe.OfIter[int].map(lambda n: 
-            n + 2
-        )
-        | pipe.OfResultIter[int, str].check(
+        | pipe.OfIter[int]
+        .map(lambda n: n + 2)
+        | pipe.OfResultIter[int, str]
+        .check(
             lambda n: n % 2 != 0,
             lambda n: f'Evens like {n} are not allowd!')
-        | pipe.OfIter[Result[int, str]].to_list()
+        | pipe.OfIter[Result[int, str]]
+        .to_list()
 )
 ```
 ```
@@ -229,16 +237,16 @@ from result import Result
 
 print(
     [1, 2, 3, 4]
-        | pipe.OfIter[int].map(lambda n: 
-            n + 2
-        )
-        | pipe.OfResultIter[int, str].check(
+        | pipe.OfIter[int]
+        .map(lambda n: n + 2)
+        | pipe.OfResultIter[int, str]
+        .check(
             lambda n: n % 2 != 0,
             lambda n: f'Evens like {n} are not allowd!')
-        | pipe.OfResultIter[int, str].on_ok(lambda n: 
-            n * 10
-        )
-        | pipe.OfIter[Result[int, str]].to_list()
+        | pipe.OfResultIter[int, str]
+        .on_ok(lambda n: n * 10)
+        | pipe.OfIter[Result[int, str]]
+        .to_list()
 )
 ```
 ```
@@ -253,19 +261,20 @@ from result import Result
 
 print(
     [1, 2, 3, 4]
-        | pipe.OfIter[int].map(lambda n: 
-            n + 2
-        )
-        | pipe.OfResultIter[int, str].check(
+        | pipe.OfIter[int]
+        .map(lambda n: n + 2)
+        | pipe.OfResultIter[int, str]
+        .check(
             lambda n: n % 2 != 0,
             lambda n: f'Evens like {n} are not allowd!')
-        | pipe.OfResultIter[int, str].then_check(
+        | pipe.OfResultIter[int, str]
+        .then_check(
             lambda n: n != 3,
             lambda _: 'The number 3 is specifically not welcome!')
-        | pipe.OfResultIter[int, str].on_ok(lambda n: 
-            n * 10
-        )
-        | pipe.OfIter[Result[int, str]].to_list()
+        | pipe.OfResultIter[int, str]
+        .on_ok(lambda n: n * 10)
+        | pipe.OfIter[Result[int, str]]
+        .to_list()
 )
 ```
 ```
@@ -295,19 +304,45 @@ print(
         'this string contains no CAPITALIZED words!',
         'this one is all good!'
     ]
-    | pipe.OfResultIter[str, str].check_using(
+    | pipe.OfResultIter[str, str]
+    .check_using(
         find_capitalized_word,
         lambda cap_word: f'Bad! You used a capitalized word: {cap_word}')
-    | pipe.OfIter[Result[str, str]].to_list()
+    | pipe.OfIter[Result[str, str]]
+    .to_list()
 )
 ```
 ```
 [Err('Bad! You used a capitalized word: CAPITALIZED'), Ok('this one is all good!')]
 ```
 
+### Case 4: Flattening of Errors (TODO)
+
+Often we might have an error occur during mapping so when we consume we end up with a type like `List[Result[T, E]]`. We can flatten the results by shortcircuiting on the first error, turning it into a `Result[List[T], E]` like in the following:
+
+```py
+from result import Result
+import checkpipe as pipe
+from typing import Tuple
+
+print(
+        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 0)]
+            | pipe.OfIter[Tuple[int, int, int]]
+            .check(pipe.tup3_unpack(lambda n, m, sub_eq:
+                [print(f'Hello {n} {m} {sub_eq}'),
+                n - m == sub_eq][-1]
+            ))
+            | pipe.OfIter[Result[Tuple[int, int, int], Tuple[int, int, int]]]
+            .to_list()
+)
+
+```
+```
+TODO BUG Infinite loop
+```
 
 
-### Unpacking tuples
+### Case 5: Unpacking tuples
 
 checkpipe comes with support for unpacking tuples of limited size while specifying
 the types of each element:
@@ -317,7 +352,8 @@ import checkpipe as pipe
 
 print(
     (4, 2, 'Hello ')
-        | pipe.OfUnpack3[int, int, str].unpack(
+        | pipe.OfUnpack3[int, int, str]
+        .unpack(
               lambda num_spaces, repeat, text: 
                   '"' + ' ' * num_spaces + repeat * text + '"'
         )
@@ -327,7 +363,54 @@ print(
 "    Hello Hello "
 ```
 
-### Creating a new Pipe function
+You can also use the pipe.tupN_unpack functions within a `pipe.OfIter[T].map` for instance:
+
+```py
+import checkpipe as pipe
+from typing import Tuple
+
+print(
+        [(4, 1, 3), (3, 2, 1), (10, 5, 5), (1, 3, 0)]
+            | pipe.OfIter[Tuple[int, int, int]]
+            .map(pipe.tup3_unpack(lambda n, m, sub_eq:
+                n - m == sub_eq
+            ))
+            | pipe.OfIter[bool]
+            .to_list()
+)
+
+```
+```
+[True, True, True, False]
+```
+
+### Case 6: Enumeration
+
+We often want to tag a counter alongside our data as we iterate. Here is an example:
+
+```py
+import checkpipe as pipe
+from typing import Tuple
+
+print(
+    ['a', 'b', 'c']
+    | pipe.Enumerate[str]
+    .enumerate()
+    | pipe.OfIter[Tuple[int, str]]
+    .map(pipe.tup2_unpack(lambda i, c: 
+        'X' if i == 1 else c
+    ))
+    | pipe.OfIter[str]
+    .to_list()
+)
+
+```
+```
+['a', 'X', 'c']
+```
+
+
+### Case 7: Creating a new Pipe function
 
 ```py
 import checkpipe as pipe
@@ -343,7 +426,8 @@ def multiply_by_num(num: int) -> Callable[[Iterable[int]], Iterable[int]]:
 print(
     [1, 2, 3]
         | multiply_by_num(3)
-        | pipe.OfIter[int].to_list()
+        | pipe.OfIter[int]
+        .to_list()
 )
 ```
 ```
@@ -373,8 +457,10 @@ class Repeat(Generic[T]):
 
 print(
     ['a', 'b', 'c']
-        | Repeat[str].repeat(3)
-        | pipe.OfIter[str].to_list()
+        | Repeat[str]
+        .repeat(3)
+        | pipe.OfIter[str]
+        .to_list()
 )
 ```
 ```
