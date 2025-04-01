@@ -527,6 +527,32 @@ print(
 ['a', 'X', 'c']
 ```
 
+In some cases, our source already has tuple elements and we want to enumerate it, and so our tuples get nested. We can flatten our tuple types.
+
+```py
+import checkpipe as pipe
+from typing import Tuple
+
+print(
+    [('a', 'aa', 'aaa'), ('b', 'bb', 'bbb'), ('c', 'cc', 'ccc')]
+    | pipe.OfIter[Tuple[str, str, str]]
+    .enumerate()
+    | pipe.OfIter[Tuple[int, Tuple[str, str, str]]]
+    .map(pipe.tup2_right_tup3_flatten)
+    | pipe.OfIter[Tuple[int, str, str, str]]
+    .map(pipe.tup4_unpack(lambda i, c, cc, ccc: 
+        ('d', 'dd', 'ddd') if i == 1 else (c, cc, ccc)
+    ))
+    | pipe.OfIter[str]
+    .to_list()
+)
+```
+```
+[('a', 'aa', 'aaa'), ('d', 'dd', 'ddd'), ('c', 'cc', 'ccc')]
+```
+
+
+
 
 ### Case 9: Creating a new Pipe function
 
