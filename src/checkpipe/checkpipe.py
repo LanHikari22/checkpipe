@@ -973,3 +973,22 @@ def tup7_unpack(fn: Callable[[T1, T2, T3, T4, T5, T6, T7], Y]) -> Callable[[Tupl
 
 def tup8_unpack(fn: Callable[[T1, T2, T3, T4, T5, T6, T7, T8], Y]) -> Callable[[Tuple[T1, T2, T3, T4, T5, T6, T7, T8]], Y]:
     return lambda tup: fn(tup[0], tup[1], tup[2], tup[3], tup[4], tup[5], tup[6], tup[7])
+
+
+def tup2_right_tup2_flatten(tup: Tuple[T1, Tuple[T2, T3]]) -> Tuple[T1, T2, T3]:
+    return (tup[0], tup[1][0], tup[1][1])
+
+def tup2_right_tup3_flatten(tup: Tuple[T1, Tuple[T2, T3, T4]]) -> Tuple[T1, T2, T3, T4]:
+    return (tup[0], tup[1][0], tup[1][1], tup[1][2])
+
+def tup2_right_tup4_flatten(tup: Tuple[T1, Tuple[T2, T3, T4, T5]]) -> Tuple[T1, T2, T3, T4, T5]:
+    return (tup[0], tup[1][0], tup[1][1], tup[1][2], tup[1][3])
+
+def tup2_right_tup5_flatten(tup: Tuple[T1, Tuple[T2, T3, T4, T5, T6]]) -> Tuple[T1, T2, T3, T4, T5, T6]:
+    return (tup[0], tup[1][0], tup[1][1], tup[1][2], tup[1][3], tup[1][4])
+
+def tup2_right_tup6_flatten(tup: Tuple[T1, Tuple[T2, T3, T4, T5, T6, T7]]) -> Tuple[T1, T2, T3, T4, T5, T6, T7]:
+    return (tup[0], tup[1][0], tup[1][1], tup[1][2], tup[1][3], tup[1][4], tup[1][5])
+
+def tup2_right_tup7_flatten(tup: Tuple[T1, Tuple[T2, T3, T4, T5, T6, T7, T8]]) -> Tuple[T1, T2, T3, T4, T5, T6, T7, T8]:
+    return (tup[0], tup[1][0], tup[1][1], tup[1][2], tup[1][3], tup[1][4], tup[1][5], tup[1][6])
