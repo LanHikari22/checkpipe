@@ -175,7 +175,7 @@ import checkpipe as pipe
 print(
     3
         | pipe.Of[int]
-        .to(lambda n: n+1)
+        .map(lambda n: n+1)
 )
 ```
 ```
@@ -184,7 +184,7 @@ print(
 
 checkpipe does not only work with iterators. It works directly with types and
 allows transformations to the source object as well. In this case, no consumption
-of an iterator is necessary. `.to(...)` will return the transformed source
+of an iterator is necessary. `.map(...)` will return the transformed source
 directly.
 
 ### Case 4: Basic validation in dataflows
@@ -221,7 +221,7 @@ print(
         | pipe.OfIter[int]
         .check(lambda n: n != 4)
         | pipe.OfResultIter[int, int]
-        .on_ok(lambda n: n + 1)
+        .map_ok(lambda n: n + 1)
         | pipe.OfIter[Result[int, int]]
         .to_list()
 )
@@ -254,7 +254,7 @@ print(
 [Ok(3), Err('Evens like 4 are not allowd!'), Ok(5), Err('Evens like 6 are not allowd!')]
 ```
 
-Here `OfResultIter[int, str]` specifies that errors will be in type str and Ok is in type int. It takes two functions, a predicate to check if the int is okay, and a function that maps from that int to some error message. We can then continue processing on just the `Ok[int]` results with `.on_ok(...)` just like before:
+Here `OfResultIter[int, str]` specifies that errors will be in type str and Ok is in type int. It takes two functions, a predicate to check if the int is okay, and a function that maps from that int to some error message. We can then continue processing on just the `Ok[int]` results with `.map_ok(...)` just like before:
 
 ```py
 import checkpipe as pipe
@@ -269,7 +269,7 @@ print(
             lambda n: n % 2 != 0,
             lambda n: f'Evens like {n} are not allowd!')
         | pipe.OfResultIter[int, str]
-        .on_ok(lambda n: n * 10)
+        .map_ok(lambda n: n * 10)
         | pipe.OfIter[Result[int, str]]
         .to_list()
 )
@@ -297,7 +297,7 @@ print(
             lambda n: n != 3,
             lambda _: 'The number 3 is specifically not welcome!')
         | pipe.OfResultIter[int, str]
-        .on_ok(lambda n: n * 10)
+        .map_ok(lambda n: n * 10)
         | pipe.OfIter[Result[int, str]]
         .to_list()
 )
@@ -460,7 +460,7 @@ from typing import Tuple
 print(
     (4, 2, 'Hello ')
         | pipe.Of[Tuple[int, int, str]]
-        .to(pipe.tup3_unpack(lambda num_underscores, repeat, text: 
+        .map(pipe.tup3_unpack(lambda num_underscores, repeat, text: 
             '"' + ('_' * num_underscores) + (repeat * text) + '"'
         ))
 )

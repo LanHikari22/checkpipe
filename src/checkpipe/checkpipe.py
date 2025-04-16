@@ -165,30 +165,11 @@ class OfIter(Generic[T]):
             return i >= m and i < n
 
         return inner
-
-    @Pipe
-    @staticmethod
-    def echo_each(callback: Callable[[T], None]) -> Callable[[Iterable[T]], Iterable[T]]:
-        """
-        Same as tap. Allows the user to produce effect without returning anything
-        """
-        def inner(iter: Iterable[T]) -> Iterable[T]:
-            return (
-                iter
-                    | OfIter[T]
-                    .map(lambda each: 
-                        each
-                            | Of[T]
-                            .echo(callback)
-                    )
-            )
-        return inner
-
     @Pipe
     @staticmethod
     def tap(callback: Callable[[T], None]) -> Callable[[Iterable[T]], Iterable[T]]:
         """
-        Same as echo_each. Allows the user to produce effect without returning anything
+        Allows the user to produce effect without returning anything
         """
         def inner(iter: Iterable[T]) -> Iterable[T]:
             return (
@@ -197,7 +178,7 @@ class OfIter(Generic[T]):
                     .map(lambda each: 
                         each
                             | Of[T]
-                            .echo(callback)
+                            .tap(callback)
                     )
             )
         return inner
@@ -432,23 +413,11 @@ class Of(Generic[T]):
     """
     For pipe functions utilizing just one generic variable T
     """
-
-    @Pipe
-    @staticmethod
-    def echo(callback: Callable[[T], None]) -> Callable[[T], T]:
-        """
-        Same as tap. Allows the user to produce effect without returning anything
-        """
-        def inner(obj: T) -> T:
-            callback(obj)
-            return obj
-        return inner
-
     @Pipe
     @staticmethod
     def tap(callback: Callable[[T], None]) -> Callable[[T], T]:
         """
-        Same as echo. Allows the user to produce effect without returning anything
+        Allows the user to produce effect without returning anything
         """
         def inner(obj: T) -> T:
             callback(obj)
@@ -468,19 +437,9 @@ class Of(Generic[T]):
 
     @Pipe
     @staticmethod
-    def to(callback: Callable[[T], Y]) -> Callable[[T], Y]:
-        """
-        Maps a value T to Y. Same as map
-        """
-        def inner(obj: T) -> Y:
-            return callback(obj)
-        return inner
-
-    @Pipe
-    @staticmethod
     def map(callback: Callable[[T], Y]) -> Callable[[T], Y]:
         """
-        Maps a value T to Y. Same as to
+        Maps a value T to Y.
         """
         def inner(obj: T) -> Y:
             return callback(obj)
@@ -661,21 +620,6 @@ class OfResult(Generic[T, E]):
 
     @Pipe
     @staticmethod
-    def on_ok(callback: Callable[[T], Y]) -> Callable[[Result[T, E]], Result[Y, E]]:
-        """
-        This unwraps the results in case of Ok[T] for `callback` to transform T -> Y. In the case
-        of Err[E], it just passes along the error. Same as map_ok.
-        """
-        def inner(res: Result[T, E]) -> Result[Y, E]:
-            if res.is_err():
-                # We pass the error along, but type cast the Ok
-                return cast(Result[Y, E], res)
-
-            return Ok(callback(res.unwrap()))
-        return inner
-
-    @Pipe
-    @staticmethod
     def on_err(callback: Callable[[E], Optional[T]]) -> Callable[[Result[T, E]], Result[T, E]]:
         """
         In case of error, this allows it to be corrected back as an Ok[T] by `callback` if the
@@ -709,7 +653,7 @@ class OfResult(Generic[T, E]):
     @staticmethod
     def map_ok(callback: Callable[[T], Y]) -> Callable[[Result[T, E]], Result[Y, E]]:
         """
-        Maps the OK type from T to Y using the callback on ok, or passes along the error with type change. Same as on_ok.
+        Maps the OK type from T to Y using the callback on ok, or passes along the error with type change.
         """
         def inner(res: Result[T, E]) -> Result[Y, E]:
             if res.is_err():
@@ -853,21 +797,6 @@ class OfResultIter(Generic[T, E]):
 
     @Pipe
     @staticmethod
-    def on_ok(callback: Callable[[T], Y]) -> Callable[[Iterable[Result[T, E]]], Generator[Result[Y, E], None, None]]:
-        """
-        Processes transformations only for Oks: T -> Y and consumes the Errs as is. Same as map_ok.
-        """
-        def inner(source: Iterable[Result[T, E]]) -> Generator[Result[Y, E], None, None]:
-            for res in source:
-                if res.is_err():
-                    # We pass the error along, but type cast the Ok
-                    yield cast(Result[Y, E], res)
-                else:
-                    yield Ok(callback(res.unwrap()))
-        return inner
-
-    @Pipe
-    @staticmethod
     def on_err(callback: Callable[[E], Optional[T]]) -> Callable[[Iterable[Result[T, E]]], Generator[Result[T, E], None, None]]:
         """
         Processes transformations only for Errs: E -> T and consumes the Oks as is.
@@ -902,7 +831,7 @@ class OfResultIter(Generic[T, E]):
     @staticmethod
     def map_ok(callback: Callable[[T], Y]) -> Callable[[Iterable[Result[T, E]]], Generator[Result[Y, E], None, None]]:
         """
-        Maps T -> Y for each Ok result. Only type casts errors. same as on_ok.
+        Maps T -> Y for each Ok result. Only type casts errors.
         """
         def inner(source: Iterable[Result[T, E]]) -> Generator[Result[Y, E], None, None]:
             for res in source:
@@ -1086,21 +1015,22 @@ def to_records() -> Callable[[Dict[str, List[Any]]], Result[List[Dict[str, Any]]
         return (
             dic
                 | OfResult[Dict[str, List[Any]], str]
-                .check(lambda dic: len(list(dic.keys())) > 0,
+                .check(
+                    lambda dic: len(list(dic.keys())) > 0,
                     lambda _: 'Empty dict')
                 
                 | OfResult[Dict[str, List[Any]], str]
-                .on_ok(lambda dic: (dic, list(dic.keys()), n_elems(dic)))
+                .map_ok(lambda dic: (dic, list(dic.keys()), n_elems(dic)))
 
                 | OfResult[Tuple[Dict[str, List[Any]], List[str], int], str]
                 .then_check(lambda dic_keys_n: all_dic_keys_list_of_same_len(dic_keys_n[0], dic_keys_n[2]),
                             lambda _: 'Lists not of same size')
 
                 | OfResult[Tuple[Dict[str, List[Any]], List[str], int], str]
-                .on_ok(lambda dic_keys_n:
+                .map_ok(lambda dic_keys_n:
                     dic_keys_n
                         | Of[Tuple[Dict[str, List[Any]], List[str], int]]
-                        .to(tup3_unpack(lambda d, ks, n:
+                        .map(tup3_unpack(lambda d, ks, n:
                             [{k: d[k][i] for k in ks} for i in range(n)]
                         ))
                 )
