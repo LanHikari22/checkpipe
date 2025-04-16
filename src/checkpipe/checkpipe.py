@@ -549,7 +549,8 @@ class OfResult(Generic[T, E]):
         """
         def inner(obj: T) -> Result[T, E]:
             return (
-                Ok(obj) if cond_callback(obj) else
+                Ok(obj)
+                    if cond_callback(obj) else
                 Err(error_callback(obj))
             )
         return inner
@@ -563,8 +564,10 @@ class OfResult(Generic[T, E]):
         """
         def inner(obj: Result[T, E]) -> Result[T, E]:
             return (
-                obj if isinstance(obj, Err) else
-                obj if cond_callback(obj.unwrap()) else
+                obj
+                    if isinstance(obj, Err) else
+                obj
+                    if cond_callback(obj.unwrap()) else
                 Err(error_callback(obj.unwrap()))
             )
         return inner
@@ -582,7 +585,8 @@ class OfResult(Generic[T, E]):
         def inner(obj: T) -> Result[T, E]:
             check_select = select_callback(obj)
             return (
-                Ok(obj) if check_select is None else
+                Ok(obj)
+                    if check_select is None else
                 Err(error_callback(check_select))
             )
         return inner
@@ -647,7 +651,7 @@ class OfResult(Generic[T, E]):
     def on_ok(callback: Callable[[T], Y]) -> Callable[[Result[T, E]], Result[Y, E]]:
         """
         This unwraps the results in case of Ok[T] for `callback` to transform T -> Y. In the case
-        of Err[E], it just passes along the error.
+        of Err[E], it just passes along the error. Same as map_ok.
         """
         def inner(res: Result[T, E]) -> Result[Y, E]:
             if res.is_err():
@@ -690,9 +694,23 @@ class OfResult(Generic[T, E]):
 
     @Pipe
     @staticmethod
-    def map_error(callback: Callable[[E], YE]) -> Callable[[Result[T, E]], Result[T, YE]]:
+    def map_ok(callback: Callable[[T], Y]) -> Callable[[Result[T, E]], Result[Y, E]]:
         """
-        Unwraps the result and maps the error types based on callback: E -> YE
+        Maps the OK type from T to Y using the callback on ok, or passes along the error with type change. Same as on_ok.
+        """
+        def inner(res: Result[T, E]) -> Result[Y, E]:
+            if res.is_err():
+                # We pass the error along, but type cast the Ok
+                return cast(Result[Y, E], res)
+
+            return Ok(callback(res.unwrap()))
+        return inner
+
+    @Pipe
+    @staticmethod
+    def map_err(callback: Callable[[E], YE]) -> Callable[[Result[T, E]], Result[T, YE]]:
+        """
+        Maps the error type from E to YE using the callback on error, or passes along an OK with type change
         """
         def inner(res: Result[T, E]) -> Result[T, YE]:
             if res.is_ok():
@@ -824,7 +842,7 @@ class OfResultIter(Generic[T, E]):
     @staticmethod
     def on_ok(callback: Callable[[T], Y]) -> Callable[[Iterable[Result[T, E]]], Generator[Result[Y, E], None, None]]:
         """
-        Processes transformations only for Oks: T -> Y and consumes the Errs as is.
+        Processes transformations only for Oks: T -> Y and consumes the Errs as is. Same as map_ok.
         """
         def inner(source: Iterable[Result[T, E]]) -> Generator[Result[Y, E], None, None]:
             for res in source:
@@ -869,7 +887,22 @@ class OfResultIter(Generic[T, E]):
 
     @Pipe
     @staticmethod
-    def map_error(callback: Callable[[E], YE]) -> Callable[[Iterable[Result[T, E]]], Generator[Result[T, YE], None, None]]:
+    def map_ok(callback: Callable[[T], Y]) -> Callable[[Iterable[Result[T, E]]], Generator[Result[Y, E], None, None]]:
+        """
+        Maps T -> Y for each Ok result. Only type casts errors. same as on_ok.
+        """
+        def inner(source: Iterable[Result[T, E]]) -> Generator[Result[Y, E], None, None]:
+            for res in source:
+                if res.is_err():
+                    # We pass the error along, but type cast the Ok
+                    yield cast(Result[Y, E], res)
+                else:
+                    yield Ok(callback(res.unwrap()))
+        return inner
+
+    @Pipe
+    @staticmethod
+    def map_err(callback: Callable[[E], YE]) -> Callable[[Iterable[Result[T, E]]], Generator[Result[T, YE], None, None]]:
         """
         Unwraps the result and maps the error types based on callback: E -> YE
         """
