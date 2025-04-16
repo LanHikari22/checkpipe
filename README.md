@@ -44,19 +44,6 @@
 </p> -->
 
 <div align="center">
-  <h4>
-    <a href="#-whycheckpipe">Why checkpipe?</a> |
-    <a href="#-usecases">Use Cases</a> |
-    <a href="#install">Install</a> |
-    <a href="#-todo">Todo</a> |
-    <a href="#-sponsorship">Sponsorship</a> |
-    <a href="#-credits">Credits</a> |
-    <a href="#-contributing">Contributing</a> |
-    <a href="#-license">License</a>
-  </h4>
-</div>
-
-<div align="center">
   <sub>Built with ❤︎ by Mohammed Alzakariya
   <!-- <a href="https://jeffreytse.net">jeffreytse</a> and
   <a href="https://github.com/jeffreytse/zsh-vi-mode/graphs/contributors">contributors </a> -->

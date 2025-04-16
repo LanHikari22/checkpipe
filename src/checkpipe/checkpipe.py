@@ -97,7 +97,81 @@ class OfIter(Generic[T]):
 
     @Pipe
     @staticmethod
+    def any(predicate: Callable[[T], bool]) -> Callable[[Iterable[T]], bool]:
+        def inner(iter: Iterable[T]) -> bool:
+            for item in iter:
+                if predicate(item):
+                    return True
+            return False
+        return inner
+
+    @Pipe
+    @staticmethod
+    def all(predicate: Callable[[T], bool]) -> Callable[[Iterable[T]], bool]:
+        def inner(iter: Iterable[T]) -> bool:
+            for item in iter:
+                if not predicate(item):
+                    return False
+            return True
+        return inner
+
+    @Pipe
+    @staticmethod
+    def at_least(predicate: Callable[[T], bool], n: int) -> Callable[[Iterable[T]], bool]:
+        """
+        True if at least `n` items meet predicate
+        """
+        def inner(iter: Iterable[T]) -> bool:
+            i: int = 0
+            for item in iter:
+                if predicate(item):
+                    i += 1
+                if i >= n:
+                    return True
+            return False
+
+        return inner
+
+    @Pipe
+    @staticmethod
+    def at_most(predicate: Callable[[T], bool], n: int) -> Callable[[Iterable[T]], bool]:
+        """
+        True if at most `n` items meet predicate
+        """
+        def inner(iter: Iterable[T]) -> bool:
+            i: int = 0
+            for item in iter:
+                if predicate(item):
+                    i += 1
+                if i > n:
+                    return False
+            return True
+
+        return inner
+
+    @Pipe
+    @staticmethod
+    def between(predicate: Callable[[T], bool], m: int, n: int) -> Callable[[Iterable[T]], bool]:
+        """
+        True if m to n exclusive ([m, n)) items meet prdicate
+        """
+        def inner(iter: Iterable[T]) -> bool:
+            i: int = 0
+            for item in iter:
+                if predicate(item):
+                    i += 1
+                if i >= n:
+                    return False
+            return i >= m and i < n
+
+        return inner
+
+    @Pipe
+    @staticmethod
     def echo_each(callback: Callable[[T], None]) -> Callable[[Iterable[T]], Iterable[T]]:
+        """
+        Same as tap. Allows the user to produce effect without returning anything
+        """
         def inner(iter: Iterable[T]) -> Iterable[T]:
             return (
                 iter
@@ -109,6 +183,25 @@ class OfIter(Generic[T]):
                     )
             )
         return inner
+
+    @Pipe
+    @staticmethod
+    def tap(callback: Callable[[T], None]) -> Callable[[Iterable[T]], Iterable[T]]:
+        """
+        Same as echo_each. Allows the user to produce effect without returning anything
+        """
+        def inner(iter: Iterable[T]) -> Iterable[T]:
+            return (
+                iter
+                    | OfIter[T]
+                    .map(lambda each: 
+                        each
+                            | Of[T]
+                            .echo(callback)
+                    )
+            )
+        return inner
+
 
     @Pipe
     @staticmethod
@@ -285,6 +378,17 @@ class OfIter(Generic[T]):
             return enumerate(source)
         return inner
 
+    @Pipe
+    @staticmethod
+    def zip(iter: Iterable[U]) -> Callable[[Iterable[T]], Iterable[Tuple[T, U]]]:
+        """
+        This joins two iterables [A, B, C, ...] and [X, Y, Z, ...] into [(A, X), (B, Y), (C, Z), ...]
+        """
+        def inner(source: Iterable[T]) -> Iterable[Tuple[T, U]]:
+            return zip(source, iter)
+        return inner
+
+
 
 class OfStr:
     @Pipe
@@ -332,6 +436,20 @@ class Of(Generic[T]):
     @Pipe
     @staticmethod
     def echo(callback: Callable[[T], None]) -> Callable[[T], T]:
+        """
+        Same as tap. Allows the user to produce effect without returning anything
+        """
+        def inner(obj: T) -> T:
+            callback(obj)
+            return obj
+        return inner
+
+    @Pipe
+    @staticmethod
+    def tap(callback: Callable[[T], None]) -> Callable[[T], T]:
+        """
+        Same as echo. Allows the user to produce effect without returning anything
+        """
         def inner(obj: T) -> T:
             callback(obj)
             return obj
