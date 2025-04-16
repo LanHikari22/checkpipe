@@ -469,6 +469,19 @@ class Of(Generic[T]):
     @Pipe
     @staticmethod
     def to(callback: Callable[[T], Y]) -> Callable[[T], Y]:
+        """
+        Maps a value T to Y. Same as map
+        """
+        def inner(obj: T) -> Y:
+            return callback(obj)
+        return inner
+
+    @Pipe
+    @staticmethod
+    def map(callback: Callable[[T], Y]) -> Callable[[T], Y]:
+        """
+        Maps a value T to Y. Same as to
+        """
         def inner(obj: T) -> Y:
             return callback(obj)
         return inner
