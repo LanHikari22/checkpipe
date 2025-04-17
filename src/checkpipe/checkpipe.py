@@ -3,6 +3,7 @@ from result import Result, Ok, Err
 from typing import Any, Callable, Dict, Generator, Generic, Iterable, List, NoReturn, Optional, \
                    Tuple, TypeVar, Union, cast, ParamSpec
 import functools
+from itertools import chain
 
 T = TypeVar('T')
 
@@ -165,6 +166,29 @@ class OfIter(Generic[T]):
             return i >= m and i < n
 
         return inner
+    
+    @Pipe
+    @staticmethod
+    def flat_map(selector: Callable[[T], Iterable[Y]]) -> Callable[[Iterable[T]], Iterable[Y]]:
+        """
+        A flat map of values from T to Iterable[Y]. This dissolves the mapping partition into this one. 
+        It can be thought of as a map into iterable combined with a concat that combines the outer iteration into the
+        inner.
+        """
+        def inner(iter: Iterable[T]) -> Iterable[Y]:
+            return chain.from_iterable(builtins.map(selector, iter))
+        return inner
+
+    @Pipe
+    @staticmethod
+    def concat() -> Callable[[Iterable[Iterable[T]]], Iterable[T]]:
+        """
+        Flattens out the outer iteration layer into the inner. [[1, 2], [3, 4], ...] becomes [1, 2, 3, 4, ...]
+        """
+        def inner(iter: Iterable[Iterable[T]]) -> Iterable[T]:
+            return chain.from_iterable(iter)
+        return inner
+
     @Pipe
     @staticmethod
     def tap(callback: Callable[[T], None]) -> Callable[[Iterable[T]], Iterable[T]]:
@@ -368,7 +392,6 @@ class OfIter(Generic[T]):
         def inner(source: Iterable[T]) -> Iterable[Tuple[T, U]]:
             return zip(source, iter)
         return inner
-
 
 
 class OfStr:
