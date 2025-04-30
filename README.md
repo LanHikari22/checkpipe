@@ -623,4 +623,4 @@ All contributions are welcome! I would appreciate feedback on improving the libr
 
 ## License
 
-This theme is licensed under the [MIT license](https://opensource.org/licenses/mit-license.php) © Mohammed Alzakariya.
+This theme is licensed under the [MIT license](https://opensource.org/licenses/mit-license.php) © 2024-2025 Mohammed Alzakariya.
